@@ -1,5 +1,5 @@
-const dynamoose = require("dynamoose");
-const { v4: uuidv4 } = require('uuid');
+import dynamoose from 'dynamoose';
+import { v4 as uuidv4 } from 'uuid';
 
 const cardSchema = new dynamoose.Schema({
   id: { type: String, hashKey: true },
@@ -10,8 +10,13 @@ const cardSchema = new dynamoose.Schema({
 
 const CardModel = dynamoose.model("CardTable", cardSchema);
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
+    const existingTables = await dynamoose.aws.ddb().listTables().promise();
+    if (!existingTables.TableNames.includes("CardTable")) {
+      await dynamoose.aws.ddb().createTable(cardSchema);
+    }
+
     let newCard = await CardModel.create({
       id: uuidv4(),
       ...JSON.parse(event.body)

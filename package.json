@@ -2,7 +2,7 @@
   "name": "serverless-api",
   "version": "1.0.0",
   "description": "A completely serverless, fully functional, CRUD-Enabled API.",
-  "main": "index.mjs",
+  "main": "./handleCreate/index.mjs",
   "scripts": {
     "test": "jest",
     "start": "node index.mjs"

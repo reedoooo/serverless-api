@@ -1,4 +1,7 @@
-const dynamoose = require("dynamoose");
+import dynamoose from 'dynamoose';
+import AWS from 'aws-sdk';
+
+const dynamoDb = new AWS.DynamoDB();
 
 const cardSchema = new dynamoose.Schema({
   title: String,
@@ -8,9 +11,26 @@ const cardSchema = new dynamoose.Schema({
 
 const CardModel = dynamoose.model("CardTable", cardSchema);
 
-exports.handler = async (event) => {
+const tableExists = async (tableName) => {
   try {
-    let updatedCard = CardModel.update(
+    await dynamoDb.describeTable({ TableName: tableName }).promise();
+    return true;
+  } catch (error) {
+    if (error.code === 'ResourceNotFoundException') {
+      return false;
+    }
+    throw error;
+  }
+};
+
+export const handler = async (event) => {
+  try {
+    const tableExists = await tableExists("CardTable");
+    if (!tableExists) {
+      throw new Error('Table does not exist');
+    }
+
+    let updatedCard = await CardModel.update(
       { id: `${event.pathParameters.id}` },
       JSON.parse(event.body)
     );

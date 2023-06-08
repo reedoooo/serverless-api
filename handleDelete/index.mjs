@@ -1,4 +1,4 @@
-const dynamoose = require("dynamoose");
+import dynamoose from 'dynamoose';
 
 const cardSchema = new dynamoose.Schema({
   title: String,
@@ -6,9 +6,9 @@ const cardSchema = new dynamoose.Schema({
 
 const CardModel = dynamoose.model("CardTable", cardSchema);
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
-    let deletedCard = await CardModel.delete(event.pathParamters.id);
+    let deletedCard = await CardModel.delete(event.pathParameters.id);
     const response = {
       statusCode: 200,
       body: JSON.stringify(deletedCard),

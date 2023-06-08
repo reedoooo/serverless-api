@@ -1,11 +1,11 @@
-require('dotenv').config()
-const AWS = require('aws-sdk');
-const dynamoose = require('dynamoose');
+import AWS from 'aws-sdk';
+import dynamoose from 'dynamoose';
 
+// Update AWS configuration
 AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION
+  accessKeyId: 'AKIA3F323ZAFZU6WIQFB',
+  secretAccessKey: 'Nwm0eHV3rTxvm8n7TGKLdJhaYM6hs9ID',
+  region: 'us-east-1'
 });
 
 const cardSchema = new dynamoose.Schema({
@@ -15,9 +15,24 @@ const cardSchema = new dynamoose.Schema({
   type: String,
 });
 
-const CardModel = dynamoose.model("CardTable", cardSchema);
+const ddb = new AWS.DynamoDB();
+const tableName = "CardTable";
+let CardModel;
 
-exports.handler = async (event) => {
+// Function to check if a DynamoDB table exists
+async function tableExists(name) {
+  try {
+    await ddb.describeTable({ TableName: name }).promise();
+    return true;
+  } catch (err) {
+    if (err.code === 'ResourceNotFoundException') {
+      return false;
+    }
+    throw err;
+  }
+}
+
+export const handler = async (event) => {
   if (!event.body) {
     const response = {
       statusCode: 500,
@@ -28,6 +43,15 @@ exports.handler = async (event) => {
     let modelBody = JSON.parse(event.body);
 
     try {
+      if (!CardModel) {
+        const exists = await tableExists(tableName);
+        if (!exists) {
+          CardModel = dynamoose.model(tableName, cardSchema);
+        } else {
+          CardModel = dynamoose.model(tableName, cardSchema, { create: false });
+        }
+      }
+      
       const newCard = await CardModel.create(modelBody);
       const response = {
         statusCode: 200,
